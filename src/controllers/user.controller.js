@@ -12,8 +12,9 @@ const generateAccessAndRefreshTokens = async(userID)=>{
 
          user.refreshToken = refreshToken
          await user.save({validateBeforeSave:false})
-
         return {accessToken,refreshToken}
+
+
     } catch (error) {
         throw new ApiError(500,"Something went wrong while generating refresh and access token")
     }
@@ -102,7 +103,10 @@ const loginUser = asyncHandler(async(req,res)=>{
 
     // username or email
     
-    if(!username || !email){
+    // if(!(username || email)){
+    //     throw new ApiError(400,"username or email is required")
+    // }
+    if(!username && !email){
         throw new ApiError(400,"username or email is required")
     }
     // find user
@@ -128,7 +132,7 @@ const loginUser = asyncHandler(async(req,res)=>{
 
     // update user 
 
-    const loggedInUser =  User.findById(user._id).select("-password -refreshToken")
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
 
     // send cookies
 
@@ -137,7 +141,8 @@ const loginUser = asyncHandler(async(req,res)=>{
         secure: true
     }
 
-    return res.status(200)
+    return res
+    .status(200)
     .cookie("accessToken",accessToken,options)
     .cookie("refreshToken",refreshToken,options)
     .json(
@@ -171,7 +176,7 @@ const logoutUser = asyncHandler(async(req,res)=>{
     return res
     .status(200)
     .clearCookie("accessToken",options)
-    .clearCookie("accessToken",options)
+    .clearCookie("refreshToken",options)
     .json(new ApiResponse(200,{},"User logged out"))
 })
 
